@@ -9,9 +9,10 @@ class World:
         self.H = H
         self.sand: Set[Sand] = set()
         self.grid = [[None for y in H] for x in W]
-        self.updated: Set[Sand] = set()
-        self.onqueue: Set[Sand] = set()
-        self.next_update: Set[Sand] = set()
+        self.updated: Set[Sand] = set() # Sand that was already updated in this step
+        self.updating: Set[Sand] = set() # Sand that is going to be updated in this step
+        self.update_queue: List[Sand] = [] # Queue of sand to be updated
+        self.next_update: Set[Sand] = set() # Sand that will update on the next step
     
     def add_sand(self, sand: Sand):
         """Adds a brand new sand object to the world.
@@ -66,6 +67,13 @@ class World:
         while y >= self.H:
             return "OUTSIDE"
         return self.grid[x][y]
+    
+    def enqueue_update(self, sand: Sand):
+        if sand in self.updated:
+            self.next_update.add(sand)
+        elif not (sand in self.updating):
+            self.update_queue.append(sand)
+            
         
 
 class Sand:
@@ -89,13 +97,16 @@ class Sand:
         """Removes a sand object from its world."""
         self.world.remove_sand(self)
     
-    def simulate(self) -> Set[Sand]:
-        """Executes a simulation step for a sand object. Returns a set of all the affected sand surrounding it."""
-        affected = set()
+    def simulate(self) -> bool:
+        """Executes a simulation step for a sand object. Returns a set of all the affected sand surrounding it.
+
+        Returns:
+            bool: True if the sand moved.
+        """
         below = self.world.get_sand(self.x, self.y-1)
         fell = False
         if below == "OUTSIDE":
-            return set()
+            return False
         if not below:
             self.move(self.x, self.y-1)
             fell = True
@@ -112,10 +123,9 @@ class Sand:
             if xdown:
                 fell = True
                 self.move(xdown, self.y-1)
-        if fell:        
-            affected.add(self.world.get_sand(self.x-1, self.y+1))
-            affected.add(self.world.get_sand(self.x, self.y+1))
-            affected.add(self.world.get_sand(self.x+1, self.y+1))
-            affected.add(self)
-        return affected
-        
+        if fell:
+            self.world.enqueue_update(self)
+            self.world.enqueue_update(self.world.get_sand(self.x-1, self.y+1))
+            self.world.enqueue_update(self.world.get_sand(self.x, self.y+1))
+            self.world.enqueue_update(self.world.get_sand(self.x+1, self.y+1))
+        return fell
