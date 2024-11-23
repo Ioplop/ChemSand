@@ -116,5 +116,6 @@ class Sand:
             affected.add(self.world.get_sand(self.x-1, self.y+1))
             affected.add(self.world.get_sand(self.x, self.y+1))
             affected.add(self.world.get_sand(self.x+1, self.y+1))
+            affected.add(self)
         return affected
         
