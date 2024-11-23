@@ -73,6 +73,15 @@ class World:
             self.next_update.add(sand)
         elif not (sand in self.updating):
             self.update_queue.append(sand)
+    
+    def update(self):
+        while len(self.update_queue):
+            sand = self.update_queue[-1]
+            if sand.simulate():
+                self.updated.add(sand)
+            self.updating.remove(sand)
+            self.update_queue.pop()
+            
             
         
 
